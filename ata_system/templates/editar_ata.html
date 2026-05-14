@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Editar Ata Gerada{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">Revisar ata</h1>
+  <p class="text-muted mb-0">Confira a sugestão do regimento e ajuste o texto antes de salvar.</p>
+</div>
+
+{% if aviso_geracao %}
+<div class="alert alert-warning" role="alert">{{ aviso_geracao }}</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="bg-white border rounded p-3">
+      <h2 class="h5">Enquadramento sugerido</h2>
+      <dl class="mb-0">
+        <dt>Artigo</dt><dd>Art. {{ regra.artigo }}, inciso {{ regra.inciso }}</dd>
+        <dt>Gravidade</dt><dd>{{ regra.gravidade }}</dd>
+        <dt>Sanção</dt><dd>{{ regra.sancao }}</dd>
+        <dt>Orientação</dt><dd>{{ regra.orientacao }}</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <form method="post" action="/atas/salvar" class="bg-white border rounded p-3">
+      {% for campo, valor in dados.items() %}
+        {% if campo != "texto_gerado" %}
+          <input type="hidden" name="{{ campo }}" value="{% if valor is sameas true %}sim{% elif valor is sameas false %}nao{% else %}{{ valor }}{% endif %}">
+        {% endif %}
+      {% endfor %}
+      <input type="hidden" name="artigo" value="{{ regra.artigo }}">
+      <input type="hidden" name="inciso" value="{{ regra.inciso }}">
+      <input type="hidden" name="gravidade" value="{{ regra.gravidade }}">
+      <input type="hidden" name="sancao" value="{{ regra.sancao }}">
+
+      <label class="form-label fw-semibold" for="texto_gerado">Texto da ata</label>
+      <textarea class="form-control ata-editor" id="texto_gerado" name="texto_gerado" rows="18">{{ texto }}</textarea>
+
+      <div class="border rounded p-3 mt-3">
+        <p class="form-label fw-semibold mb-2">Assinaturas da ata</p>
+        <div class="row g-2">
+          {% for assinatura in assinaturas_padrao %}
+          <div class="col-md-6">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="assinaturas" id="assinatura_{{ loop.index }}" value="{{ assinatura }}" {% if assinatura in assinaturas_selecionadas %}checked{% endif %}>
+              <label class="form-check-label" for="assinatura_{{ loop.index }}">{{ assinatura }}</label>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mt-3">
+        <button class="btn btn-outline-primary" type="submit" formaction="/atas/gerar">Gerar nova versão</button>
+        <div class="d-flex gap-2 justify-content-end">
+          <a class="btn btn-outline-secondary" href="/atas/nova">Voltar</a>
+          <button class="btn btn-primary" type="submit">Salvar ata</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Nova Ata{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">Nova ata</h1>
+  <p class="text-muted mb-0">Preencha os dados da ocorrência para gerar uma minuta editável.</p>
+</div>
+
+<form class="bg-white border rounded p-3 p-md-4" method="post" action="/atas/gerar">
+  <div class="row g-3">
+    <div class="col-md-3">
+      <label class="form-label">Número da ata</label>
+      <input type="hidden" name="numero" value="__auto__">
+      <input class="form-control" value="Automático" disabled>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Ano</label>
+      <input class="form-control" name="ano" type="number" value="{{ ano_atual }}" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Data da ocorrência</label>
+      <input class="form-control" name="data_ocorrencia" type="date" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Horário/período</label>
+      <input class="form-control" name="periodo" placeholder="Ex.: matutino, 2ª aula" required>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Local</label>
+      <input class="form-control" name="local" required>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Nome do aluno ou alunos</label>
+      <input class="form-control" name="alunos" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Turma</label>
+      <input class="form-control" name="turma" required>
+    </div>
+    <div class="col-md-8">
+      <label class="form-label">Tipo de ocorrência</label>
+      <select class="form-select" name="tipo_ocorrencia" required>
+        {% for tipo in tipos %}
+        <option value="{{ tipo }}">{{ tipo }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Estilo da redação</label>
+      <select class="form-select" name="estilo_redacao">
+        <option value="modelo_escola">Modelo da escola</option>
+        <option value="equilibrada">Equilibrada</option>
+        <option value="objetiva">Objetiva</option>
+        <option value="detalhada">Detalhada</option>
+        <option value="pedagogica">Pedagógica</option>
+      </select>
+    </div>
+    <div class="col-md-8 d-flex align-items-end">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="usar_ia" value="sim" id="usar_ia">
+        <label class="form-check-label" for="usar_ia">Gerar texto com IA configurada</label>
+      </div>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Relato simples dos fatos</label>
+      <textarea class="form-control" name="relato_simples" rows="4" required></textarea>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Providências tomadas</label>
+      <textarea class="form-control" name="providencias" rows="3" required></textarea>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Responsável foi convocado?</label>
+      <select class="form-select" name="responsavel_convocado">
+        <option value="nao">Não</option>
+        <option value="sim">Sim</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Nome do responsável</label>
+      <input class="form-control" name="nome_responsavel">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Houve reincidência?</label>
+      <select class="form-select" name="reincidencia">
+        <option value="nao">Não</option>
+        <option value="sim">Sim</option>
+      </select>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Observações adicionais</label>
+      <textarea class="form-control" name="observacoes_adicionais" rows="2"></textarea>
+    </div>
+  </div>
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <a class="btn btn-outline-secondary" href="/">Cancelar</a>
+    <button class="btn btn-primary" type="submit">Gerar ata</button>
+  </div>
+</form>
+{% endblock %}
