@@ -12,13 +12,14 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from auth import autenticar_usuario, criar_admin_padrao, usuario_logado
 from database import get_db, init_db
-from models import Ata, Usuario
+from models import Ata, ContextoAta, Usuario
 from services.assinaturas import (
     ASSINATURAS_PADRAO,
     desserializar_assinaturas,
     serializar_assinaturas,
 )
 from services.exportador_docx import exportar_ata_docx, exportar_ata_pdf
+from services.contextos import criar_contextos_iniciais, selecionar_contextos
 from services.gerador_ata import gerar_ata
 from services.gerador_ia import GeracaoIAIndisponivel, gerar_ata_com_ia
 from services.regras import sugerir_regra, tipos_ocorrencia
@@ -43,6 +44,7 @@ def startup() -> None:
     db = next(get_db())
     try:
         criar_admin_padrao(db)
+        criar_contextos_iniciais(db)
     finally:
         db.close()
 
@@ -60,6 +62,12 @@ def proximo_numero_ata(db: Session, ano: int) -> str:
         except ValueError:
             continue
     return str((max(numeros) if numeros else 0) + 1)
+
+
+def remover_exports_ata(ata: Ata) -> None:
+    for caminho in (BASE_DIR / "exports").glob(f"ata_{ata.numero}_{ata.ano}_{ata.id}.*"):
+        if caminho.is_file():
+            caminho.unlink()
 
 
 def dados_ata_form(
@@ -202,14 +210,19 @@ def gerar_previa_ata(
     )
     regra = sugerir_regra(dados["tipo_ocorrencia"], dados["reincidencia"])
     aviso_geracao = None
+    contextos = selecionar_contextos(db, dados, regra)
+    texto_base = gerar_ata(dados, regra, contextos=contextos)
     if dados["usar_ia"]:
         try:
-            texto = gerar_ata_com_ia(dados, regra)
-        except GeracaoIAIndisponivel as exc:
-            texto = gerar_ata(dados, regra)
-            aviso_geracao = f"Não foi possível usar IA: {exc} Foi gerada uma versão local."
+            texto = gerar_ata_com_ia(dados, regra, texto_base)
+        except (GeracaoIAIndisponivel, Exception) as exc:
+            texto = texto_base
+            aviso_geracao = (
+                "IA local indisponível. Foi usada geração padrão do sistema. "
+                f"Detalhe: {exc}"
+            )
     else:
-        texto = gerar_ata(dados, regra)
+        texto = texto_base
 
     return templates.TemplateResponse(
         "editar_ata.html",
@@ -279,6 +292,79 @@ def salvar_ata(
     db.commit()
     db.refresh(ata)
     return RedirectResponse(f"/atas/{ata.id}", status_code=303)
+
+
+@app.post("/atas/{ata_id}/excluir")
+def excluir_ata(
+    ata_id: int,
+    db: Session = Depends(get_db),
+    user: Usuario = Depends(usuario_logado),
+):
+    ata = db.get(Ata, ata_id)
+    if not ata:
+        raise HTTPException(status_code=404, detail="Ata não encontrada")
+
+    remover_exports_ata(ata)
+    db.delete(ata)
+    db.commit()
+    return RedirectResponse("/", status_code=303)
+
+
+@app.get("/contextos")
+def listar_contextos(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: Usuario = Depends(usuario_logado),
+):
+    contextos = db.query(ContextoAta).order_by(ContextoAta.criado_em.desc()).all()
+    return templates.TemplateResponse(
+        "contextos.html",
+        {
+            "request": request,
+            "contextos": contextos,
+            "tipos": tipos_ocorrencia(),
+            "user": user,
+        },
+    )
+
+
+@app.post("/contextos")
+def criar_contexto(
+    titulo: str = Form(...),
+    texto: str = Form(...),
+    tipo_ocorrencia: str | None = Form(None),
+    gravidade: str | None = Form(None),
+    palavras_chave: str | None = Form(None),
+    ativo: str | None = Form(None),
+    db: Session = Depends(get_db),
+    user: Usuario = Depends(usuario_logado),
+):
+    db.add(
+        ContextoAta(
+            titulo=titulo.strip(),
+            texto=texto.strip(),
+            tipo_ocorrencia=(tipo_ocorrencia or "").strip() or None,
+            gravidade=(gravidade or "").strip() or None,
+            palavras_chave=(palavras_chave or "").strip() or None,
+            ativo=form_bool(ativo),
+        )
+    )
+    db.commit()
+    return RedirectResponse("/contextos", status_code=303)
+
+
+@app.post("/contextos/{contexto_id}/excluir")
+def excluir_contexto(
+    contexto_id: int,
+    db: Session = Depends(get_db),
+    user: Usuario = Depends(usuario_logado),
+):
+    contexto = db.get(ContextoAta, contexto_id)
+    if not contexto:
+        raise HTTPException(status_code=404, detail="Contexto não encontrado")
+    db.delete(contexto)
+    db.commit()
+    return RedirectResponse("/contextos", status_code=303)
 
 
 @app.get("/atas/{ata_id}")

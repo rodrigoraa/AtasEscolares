@@ -38,3 +38,16 @@ class Usuario(Base):
     nome = Column(String(120), nullable=False)
     usuario = Column(String(80), unique=True, index=True, nullable=False)
     senha_hash = Column(String(255), nullable=False)
+
+
+class ContextoAta(Base):
+    __tablename__ = "contextos_ata"
+
+    id = Column(Integer, primary_key=True, index=True)
+    titulo = Column(String(160), nullable=False)
+    texto = Column(Text, nullable=False)
+    tipo_ocorrencia = Column(String(180), nullable=True)
+    gravidade = Column(String(80), nullable=True)
+    palavras_chave = Column(Text, nullable=True)
+    ativo = Column(Boolean, default=True, nullable=False)
+    criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)

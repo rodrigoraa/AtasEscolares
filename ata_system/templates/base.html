@@ -8,20 +8,25 @@
   <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <nav class="navbar navbar-expand-lg app-navbar">
     <div class="container">
-      <a class="navbar-brand fw-semibold" href="/">Atas Escolares</a>
+      <a class="navbar-brand fw-semibold" href="/">
+        <span class="brand-mark">A</span>
+        Atas Escolares
+      </a>
       {% if user %}
-      <div class="d-flex align-items-center gap-3 text-white">
-        <span class="small">{{ user.nome }}</span>
+      <div class="d-flex align-items-center gap-3">
+        <a class="nav-link text-white" href="/contextos">Contextos</a>
+        <span class="user-chip">{{ user.nome }}</span>
         <a class="btn btn-sm btn-outline-light" href="/logout">Sair</a>
       </div>
       {% endif %}
     </div>
   </nav>
 
-  <main class="container py-4">
+  <main class="container app-shell">
     {% block content %}{% endblock %}
   </main>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

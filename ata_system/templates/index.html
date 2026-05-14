@@ -3,14 +3,30 @@
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center mb-4">
   <div>
+    <p class="section-kicker mb-1">Painel</p>
     <h1 class="h3 mb-1">Histórico de atas</h1>
     <p class="text-muted mb-0">Registros disciplinares salvos no sistema.</p>
   </div>
   <a class="btn btn-primary" href="/atas/nova">Nova ata</a>
 </div>
 
-<div class="table-responsive bg-white border rounded">
-  <table class="table table-hover align-middle mb-0">
+<section class="summary-grid mb-4">
+  <div class="summary-item">
+    <span class="summary-label">Atas salvas</span>
+    <strong>{{ atas|length }}</strong>
+  </div>
+  <div class="summary-item accent-green">
+    <span class="summary-label">Ano atual</span>
+    <strong>{{ atas[0].ano if atas else "-" }}</strong>
+  </div>
+  <div class="summary-item accent-rose">
+    <span class="summary-label">Último registro</span>
+    <strong>{{ atas[0].data_ocorrencia.strftime("%d/%m/%Y") if atas else "-" }}</strong>
+  </div>
+</section>
+
+<div class="table-panel">
+  <table class="table table-hover align-middle mb-0 app-table">
     <thead class="table-light">
       <tr>
         <th>Ata</th>
@@ -25,20 +41,25 @@
     <tbody>
       {% for ata in atas %}
       <tr>
-        <td class="fw-semibold">{{ ata.numero }}/{{ ata.ano }}</td>
+        <td class="fw-semibold text-nowrap">{{ ata.numero }}/{{ ata.ano }}</td>
         <td>{{ ata.data_ocorrencia.strftime("%d/%m/%Y") }}</td>
         <td>{{ ata.alunos }}</td>
         <td>{{ ata.turma }}</td>
         <td>{{ ata.tipo_ocorrencia }}</td>
         <td><span class="badge text-bg-secondary">{{ ata.gravidade }}</span></td>
         <td class="text-end">
-          <a class="btn btn-sm btn-outline-primary" href="/atas/{{ ata.id }}">Ver</a>
-          <a class="btn btn-sm btn-outline-secondary" href="/atas/{{ ata.id }}/docx">DOCX</a>
+          <div class="d-inline-flex gap-1">
+            <a class="btn btn-sm btn-outline-primary" href="/atas/{{ ata.id }}">Ver</a>
+            <a class="btn btn-sm btn-outline-secondary" href="/atas/{{ ata.id }}/docx">DOCX</a>
+            <form method="post" action="/atas/{{ ata.id }}/excluir" onsubmit="return confirm('Excluir definitivamente a ata nº {{ ata.numero }}/{{ ata.ano }}?');">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Excluir</button>
+            </form>
+          </div>
         </td>
       </tr>
       {% else %}
       <tr>
-        <td colspan="7" class="text-center text-muted py-5">Nenhuma ata salva ainda.</td>
+        <td colspan="7" class="empty-state">Nenhuma ata salva ainda.</td>
       </tr>
       {% endfor %}
     </tbody>

@@ -25,7 +25,8 @@ def get_db():
 
 
 def init_db():
-    from models import Ata, Usuario  # noqa: F401
+    # Importa os models para registrar as tabelas no Base.metadata.
+    from models import Ata, ContextoAta, Usuario  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
     migrar_colunas()
